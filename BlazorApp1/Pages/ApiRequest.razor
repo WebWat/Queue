@@ -1,0 +1,94 @@
+﻿@using System.Timers
+@implements IDisposable
+@inject HttpClient Http
+
+<h3>ApiRequest</h3>
+
+@if (result is null)
+{
+    <h5>Count: @count</h5>
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width: @(progress * 100 / progressStart)%" aria-valuenow="@(progress * 100 / progressStart)" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+}
+
+@if (done)
+{
+    <h4>Proccessing</h4>
+}
+
+@if (result != null)
+{
+    <h4>@result</h4>
+}
+
+<button class="btn btn-primary mt-5" @onclick="Start">GetData</button>
+
+
+@code {
+    private string id = Guid.NewGuid().ToString();
+    private int progress = 0;
+    private int count = 0;
+    private int progressStart = -1;
+    private bool done = false;
+    private string result = null;
+    private Timer timer = new(500);
+
+    private async Task OnTimerCallback(object sender, ElapsedEventArgs e)
+    {
+        if (!done)
+        {
+            var response = await Http.GetStringAsync("state/" + id);
+            count = int.Parse(response);
+
+            if (count == 0)
+            {
+                progress = progressStart;
+                done = true;
+            }
+            else
+            {
+                progressStart = progressStart == -1 ? count : progressStart;
+                progress = progressStart - count;
+            }
+        }
+        else
+        {
+            timer.Stop();
+            await Operation();
+        }
+
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public async Task Operation()
+    {
+        var response2 = await Http.GetAsync("Do/" + id);
+
+        if (response2.IsSuccessStatusCode)
+        {
+            result = await response2.Content.ReadAsStringAsync();
+        }
+
+        done = true;
+    }
+
+    public void Start()
+    {
+        done = done == true ? false : done;
+        result = null;
+        id = Guid.NewGuid().ToString();
+        progress = 0;
+        count = 0;
+        progressStart = -1;
+        timer.Elapsed += async (sender, arguments) => await OnTimerCallback(sender, arguments);
+        timer.Start();
+        StateHasChanged();
+    }
+
+    public void Dispose() => timer.Dispose();
+}
+   
