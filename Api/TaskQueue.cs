@@ -2,6 +2,8 @@
 
 namespace Api
 {
+    // TODO: add logging
+    // check memory
     public class TaskQueue
     {
         private class Item
@@ -14,7 +16,7 @@ namespace Api
         private ConcurrentQueue<Item> Queue = new();
         private ILogger<TaskQueue> _logger;
         private readonly SemaphoreSlim _semaphoreSlim;
-        public const int MaxThreads = 1;
+        public readonly int MaxThreads;
 
         public int GetCurrentCount()
         {
@@ -31,6 +33,8 @@ namespace Api
 
         public TaskQueue(ILogger<TaskQueue> logger)
         {
+            MaxThreads = Environment.ProcessorCount / 2;
+
             _logger = logger;
             _semaphoreSlim = new SemaphoreSlim(MaxThreads, MaxThreads);
         }

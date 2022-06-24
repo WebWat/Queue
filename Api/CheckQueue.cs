@@ -25,7 +25,7 @@
             {
                 var current = _taskQueue.GetFirstId();
 
-                if (_temp != null && current == _temp && _taskQueue.GetCurrentCount() == TaskQueue.MaxThreads)
+                if (_temp != null && current == _temp && _taskQueue.GetCurrentCount() == _taskQueue.MaxThreads)
                 {
                     _logger.LogInformation($"Remove {current}");
                     _taskQueue.Dequeue();
@@ -36,7 +36,7 @@
                     _temp = current;
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(10));
+                await Task.Delay(TimeSpan.FromSeconds(1));
             }
         }
     }
