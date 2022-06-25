@@ -1,5 +1,148 @@
 ﻿@page "/"
+@using System.Timers
+@using System.Text.Json
+@using System.Text
+@implements IDisposable
+@inject HttpClient Http
 
 <PageTitle>Index</PageTitle>
 
-<ApiRequest></ApiRequest>
+<h3>Find Determinant</h3>
+
+<h4>Your data:</h4>
+
+<table class="table table-bordered">
+    <tbody>
+        @for (int i = 0; i < Len; i++)
+        {
+            <tr>
+                @for (int j = 0; j < Len; j++)
+                {
+                    <td>@matrix.Rows[i].Data[j]</td>
+                }
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h4 class="mt-5">Queue</h4>
+
+@if (result is null)
+{
+    <h5>Count: @count</h5>
+    <div class="progress">
+        <div class="progress-bar" role="progressbar" style="width: @(progress * 100 / progressStart)%" aria-valuenow="@(progress * 100 / progressStart)" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+}
+
+@if (done)
+{
+    <h4>Processing...</h4>
+}
+
+@if (result != null)
+{
+    <h4><b>@result</b></h4>
+}
+
+<button class="btn btn-primary mt-5" @onclick="Start">GetData</button>
+
+
+@code {
+    private const int Len = 10;
+    private string id = null;
+    private int progress = 0;
+    private int count = 0;
+    private int progressStart = -1;
+    private Matrix matrix = new();
+    private bool done = false;
+    private string result = null;
+    private Timer timer = new(500);
+
+    protected override void OnInitialized()
+    {
+        Random random = new();
+
+        for (int i = 0; i < Len; i++)
+        {
+            var row = new double[Len];
+
+            for (int j = 0; j < Len; j++)
+            {
+                row[j] = random.Next(-20, 21);
+            }
+
+            matrix.Rows.Add(new Matrix.Row(row));
+        }
+
+        base.OnInitialized();
+    }
+
+    private async Task OnTimerCallback(object sender, ElapsedEventArgs e)
+    {
+        if (!done)
+        {
+            var response = await Http.GetStringAsync("state/" + id);
+
+            count = int.Parse(response);
+
+            if (count == 0)
+            {
+                progress = progressStart;
+                done = true;
+            }
+            else
+            {
+                progressStart = progressStart == -1 ? count : progressStart;
+                progress = progressStart - count;
+            }
+        }
+        else
+        {
+            timer.Stop();
+            await Operation();
+        }
+
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public async Task Operation()
+    {
+        var response2 = await Http.PostAsync("Do/" + id, default);
+
+        if (response2.IsSuccessStatusCode)
+        {
+            result = await response2.Content.ReadAsStringAsync();
+        }
+
+        done = false;
+    }
+
+    public async Task Start()
+    {
+        done = done == true ? false : done;
+        result = null;
+        id = Guid.NewGuid().ToString();
+        progress = 0;
+        count = 0;
+        progressStart = -1;
+
+        string json = JsonSerializer.Serialize(matrix);
+
+        var response = await Http.PostAsync("push/" + id, new StringContent(json, Encoding.UTF8, "application/json"));
+
+        if (response.IsSuccessStatusCode)
+        {
+            timer.Elapsed += async (sender, arguments) => await OnTimerCallback(sender, arguments);
+            timer.Start();
+        }
+
+        StateHasChanged();
+    }
+
+    public void Dispose() => timer.Dispose();
+}
+   

@@ -6,8 +6,7 @@
         private readonly TaskQueue _taskQueue;
         private string _temp = null;
 
-        public CheckQueue(TaskQueue taskQueue,
-            ILogger<CheckQueue> logger)
+        public CheckQueue(TaskQueue taskQueue, ILogger<CheckQueue> logger)
         {
             _taskQueue = taskQueue;
             _logger = logger;
@@ -36,7 +35,9 @@
                     _temp = current;
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                _logger.LogInformation($"[{DateTime.Now.ToLongTimeString()}] Queue length: {_taskQueue.GetQueueLength()}");
+
+                await Task.Delay(TimeSpan.FromSeconds(10));
             }
         }
     }

@@ -2,8 +2,6 @@
 
 namespace Api
 {
-    // TODO: add logging
-    // check memory
     public class TaskQueue
     {
         private class Item
@@ -14,13 +12,17 @@ namespace Api
 
         private readonly object _locker = new object();
         private ConcurrentQueue<Item> Queue = new();
-        private ILogger<TaskQueue> _logger;
         private readonly SemaphoreSlim _semaphoreSlim;
         public readonly int MaxThreads;
 
         public int GetCurrentCount()
         {
             return _semaphoreSlim.CurrentCount;
+        }
+
+        public int GetQueueLength()
+        {
+            return Queue.Count;
         }
 
         public string GetFirstId()
@@ -31,11 +33,10 @@ namespace Api
             return null;
         }
 
-        public TaskQueue(ILogger<TaskQueue> logger)
+        public TaskQueue()
         {
-            MaxThreads = Environment.ProcessorCount / 2;
+            MaxThreads = 1;
 
-            _logger = logger;
             _semaphoreSlim = new SemaphoreSlim(MaxThreads, MaxThreads);
         }
 
@@ -44,19 +45,27 @@ namespace Api
             Queue.TryDequeue(out _);
         }
 
-        public int GetState(string id, double[,] data)
+        public void Push(string id, Matrix matrix)
+        {
+            var data = new double[matrix.Rows.Count, matrix.Rows.Count];
+
+            for (int i = 0; i < matrix.Rows.Count; i++)
+            {
+                for (int j = 0; j < matrix.Rows.Count; j++)
+                {
+                    data[i, j] = matrix.Rows[i].Data[j];
+                }
+            }
+
+            Queue.Enqueue(new Item { Id = id, Data = data });
+        }
+
+
+        public int GetState(string id)
         {
             lock (_locker)
             {
-                var index = Array.IndexOf(Queue.Select(i => i.Id).ToArray(), id);
-
-                if (index == -1)
-                {
-                    Queue.Enqueue(new Item { Id = id, Data = data });
-                    return Queue.Count - 1;
-                }
-                else
-                    return index;
+                return Array.IndexOf(Queue.Select(i => i.Id).ToArray(), id);
             }
         }
 
@@ -80,7 +89,7 @@ namespace Api
                     {
                         resultTask = new Task<double>(() =>
                         {
-                            return Determinant(temp.Data);
+                            return Operation.Determinant(temp.Data);
                         });
 
                         Queue.TryDequeue(out _);
@@ -98,53 +107,6 @@ namespace Api
             {
                 _semaphoreSlim.Release();
             }
-        }
-
-        public double Determinant(double[,] _array)
-        {
-            if (_array.GetLength(0) != _array.GetLength(1))
-                throw new ArgumentException("The matrix must be square");
-
-            switch (_array.GetLength(0))
-            {
-                case 1:
-                    return _array[0, 0];
-                case 2:
-                    return _array[0, 0] * _array[1, 1] - _array[0, 1] * _array[1, 0];
-                case 3:
-                    return _array[0, 0] * _array[1, 1] * _array[2, 2] +
-                           _array[0, 1] * _array[1, 2] * _array[2, 0] +
-                           _array[0, 2] * _array[1, 0] * _array[2, 1] -
-                           _array[0, 2] * _array[1, 1] * _array[2, 0] -
-                           _array[0, 0] * _array[1, 2] * _array[2, 1] -
-                           _array[0, 1] * _array[1, 0] * _array[2, 2];
-                default:
-                    double result = 0;
-
-                    for (int i = 0; i < _array.GetLength(1); i++)
-                    {
-                        double value = _array[0, i];
-                        var matrix = new double[_array.GetLength(1) - 1, _array.GetLength(1) - 1];
-                        int column = 0;
-
-                        for (int a = 1; a < _array.GetLength(0); a++)
-                        {
-                            for (int b = 0; b < _array.GetLength(1); b++)
-                            {
-                                if (b != i)
-                                {
-                                    matrix[a - 1, column] = _array[a, b];
-                                    column++;
-                                }
-                            }
-                            column = 0;
-                        }
-
-                        result += (i % 2 == 0 ? 1 : (-1)) * value * Determinant(matrix);
-                    }
-
-                    return result;
-            }
-        }
+        }       
     }
 }
