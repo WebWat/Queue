@@ -13,6 +13,7 @@ namespace Api
         private readonly object _locker = new object();
         private ConcurrentQueue<Item> Queue = new();
         private readonly SemaphoreSlim _semaphoreSlim;
+        private readonly ILogger<TaskQueue> _logger;
         public readonly int MaxThreads;
 
         public int GetCurrentCount()
@@ -33,11 +34,12 @@ namespace Api
             return null;
         }
 
-        public TaskQueue()
+        public TaskQueue(ILogger<TaskQueue> logger)
         {
             MaxThreads = 1;
 
             _semaphoreSlim = new SemaphoreSlim(MaxThreads, MaxThreads);
+            _logger = logger;
         }
 
         public void Dequeue()
@@ -74,7 +76,8 @@ namespace Api
             await _semaphoreSlim.WaitAsync();
 
             Task<double> resultTask = null;
-            Item temp;
+            Item temp = new();
+            bool execute = false;
 
             try
             {
@@ -100,12 +103,18 @@ namespace Api
                     }
                 }
 
+                _logger.LogInformation("Execute task " + temp.Id);
+                execute = true;
+
                 resultTask.Start();
                 return await resultTask;
             }
             finally
             {
                 _semaphoreSlim.Release();
+
+                if (execute)
+                    _logger.LogInformation("Completed task " + temp.Id);
             }
         }       
     }

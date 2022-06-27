@@ -35,7 +35,7 @@
                     _temp = current;
                 }
 
-                _logger.LogInformation($"[{DateTime.Now.ToLongTimeString()}] Queue length: {_taskQueue.GetQueueLength()}");
+                _logger.LogInformation($"Queue length: {_taskQueue.GetQueueLength()}");
 
                 await Task.Delay(TimeSpan.FromSeconds(10));
             }

@@ -1,18 +1,8 @@
 using Api;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Annotations;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net.Mime;
-using System.Text;
+using Api.Logger;
 
-/* 
- * 1. Testing
- * 2. Add request data 
- * 3. Add docs
- */
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +23,10 @@ builder.Services.AddLogging();
 builder.Services.AddHostedService<CheckQueue>();
 builder.Services.AddCors();
 builder.Services.AddSingleton<TaskQueue>();
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddFile("app.log", append: true);
+});
 
 var app = builder.Build();
 
