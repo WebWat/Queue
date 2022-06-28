@@ -48,7 +48,7 @@ var step = Step.Create("do", timeout: TimeSpan.FromHours(1), execute: async cont
 
 
 var scenario = ScenarioBuilder.CreateScenario("test", step).WithLoadSimulations(new[] {
-     Simulation.KeepConstant(3, TimeSpan.FromSeconds(60))
+     Simulation.KeepConstant(5, TimeSpan.FromSeconds(60))
 }); 
 
 NBomberRunner
