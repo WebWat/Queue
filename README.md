@@ -86,6 +86,7 @@ It's worth paying attention to the background `CheckQueue` process.
 It's simple, there can be a situation where a client has added a request to the queue, but doesn't execute it.
 This means that if the queue reaches that client and gets stuck forever. 
 This service serves to remove these requests if they don't execute.
+
 ``` csharp
 private async Task BackgroundProcessing(CancellationToken stoppingToken)
 {
@@ -113,3 +114,80 @@ private async Task BackgroundProcessing(CancellationToken stoppingToken)
 ```
 
 ### BlazorApp1 project
+
+The Blazor application generates a random square matrix with a given size. 
+In the first, client sends a POST(push/id) request to be added to the queue. 
+Next, a timer is set for the GET(state/id) request to get the position in the queue at 500ms intervals. 
+If the position in the queue is `0`, then we send POST(do/id) request to process the matrix. 
+At the end we wait for the result and output.
+
+Code from `Index.razor`
+
+``` csharp
+private async Task OnTimerCallback(object sender, ElapsedEventArgs e)
+{
+    if (!done)
+    {
+        var response = await Http.GetStringAsync("state/" + id);
+
+        count = int.Parse(response);
+
+        if (count == 0)
+        {
+            progress = progressStart;
+            done = true;
+        }
+        else
+        {
+            progressStart = progressStart == -1 ? count : progressStart;
+            progress = progressStart - count;
+        }
+    }
+    else
+    {
+        timer.Stop();
+        await Operation();
+    }
+
+    await InvokeAsync(() =>
+    {
+        StateHasChanged();
+    });
+}
+
+public async Task Operation()
+{
+    var response2 = await Http.PostAsync("Do/" + id, default);
+
+    if (response2.IsSuccessStatusCode)
+    {
+        result = await response2.Content.ReadAsStringAsync();
+    }
+
+    done = false;
+}
+
+public async Task Start()
+{
+    // Set values to default
+    // ...
+
+    string json = JsonSerializer.Serialize(matrix);
+
+    var response = await Http.PostAsync("push/" + id, new StringContent(json, Encoding.UTF8, "application/json"));
+
+    if (response.IsSuccessStatusCode)
+    {
+        timer.Elapsed += async (sender, arguments) => await OnTimerCallback(sender, arguments);
+        timer.Start();
+    }
+
+    StateHasChanged();
+}
+```
+
+### NbomberС2
+You can also run the `NbomberC2` load testing project and test the example. Only for this you need to [run all projects from 1 solution](https://stackoverflow.com/questions/3850019/running-two-projects-at-once-in-visual-studio).
+
+## Contributing
+Any pull request that will somehow help improve this project is welcome!
