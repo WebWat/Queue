@@ -11,6 +11,32 @@ The project uses **Blazor WebAssembly** as a client and [NBomber](https://github
 
 ### Api project
 
+API content (`Program.cs`):
+``` csharp
+// Push request
+app.MapPost("/push/{id}", (string id, Matrix matrix, TaskQueue queue) =>
+{
+    queue.Push(id, matrix);
+});
+
+// Get state
+app.MapGet("/state/{id}", (string id, TaskQueue queue) =>
+{
+    return queue.GetState(id);
+});
+
+// Execute task
+app.MapPost("/do/{id}", async (string id, TaskQueue queue) =>
+{
+    var result = await queue.Do(id);
+
+    if (result is 0)
+        return Results.BadRequest();
+
+    return Results.Text(result.ToString());
+});
+```
+
 The main logic will happen on the server side (the `Api` project). Let's take a look at the `TaskQueue.cs` file. 
 Initially we will consider this class as a service, which will represent the **Singleton** type. 
 In the service we have a thread-safe **ConcurrentQueue**, which stores requests, and the request itself will be of type **Item** (contains a unique id and request data). 
