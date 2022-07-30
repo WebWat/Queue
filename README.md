@@ -217,3 +217,7 @@ You can also run the `NbomberC2` load testing project and test the example. Only
 
 ## Contributing
 Any pull request that will somehow help improve this project is welcome!
+
+## Used resources
+- https://github.com/nreco/logging
+
