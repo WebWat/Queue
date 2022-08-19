@@ -34,12 +34,12 @@
         /// <summary>
         /// Custom formatter for the log entry line. 
         /// </summary>
-        public Func<LogMessage, string> FormatLogEntry { get; set; }
+        public Func<LogMessage, string> FormatLogEntry { get; set; } = default!;
 
         /// <summary>
         /// Custom filter for the log entry.
         /// </summary>
-        public Func<LogMessage, bool> FilterLogEntry { get; set; }
+        public Func<LogMessage, bool> FilterLogEntry { get; set; } = default!;
 
         /// <summary>
         /// Minimal logging level for the file logger.
@@ -58,7 +58,7 @@
         ///   return String.Format( Path.GetFileNameWithoutExtension(fname) + "_{0:yyyy}-{0:MM}-{0:dd}" + Path.GetExtension(fname), DateTime.UtcNow); 
         /// };
         /// </example>
-        public Func<string, string> FormatLogFileName { get; set; }
+        public Func<string, string> FormatLogFileName { get; set; } = default!;
 
         /// <summary>
         /// Custom handler for log file errors.
@@ -71,7 +71,7 @@
         ///   err.UseNewLogFileName( Path.GetFileNameWithoutExtension(err.LogFileName)+ "_alt" + Path.GetExtension(err.LogFileName) );
         /// };
         /// </example>
-        public Action<FileLoggerProvider.FileError> HandleFileError { get; set; }
+        public Action<FileLoggerProvider.FileError> HandleFileError { get; set; } = default!;
 
     }
 }

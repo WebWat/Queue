@@ -50,13 +50,13 @@
 
 @code {
     private const int Len = 10;
-    private string id = null;
+    private string? id = null;
     private int progress = 0;
     private int count = 0;
     private int progressStart = -1;
     private Matrix matrix = new();
     private bool done = false;
-    private string result = null;
+    private string? result = null;
     private Timer timer = new(500);
 
     protected override void OnInitialized()
@@ -136,7 +136,7 @@
 
         if (response.IsSuccessStatusCode)
         {
-            timer.Elapsed += async (sender, arguments) => await OnTimerCallback(sender, arguments);
+            timer.Elapsed += async (sender, arguments) => await OnTimerCallback(sender!, arguments);
             timer.Start();
         }
 

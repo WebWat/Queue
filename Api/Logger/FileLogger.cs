@@ -15,7 +15,7 @@ namespace Api.Logger
 		}
 		public IDisposable BeginScope<TState>(TState state)
 		{
-			return null;
+			return null!;
 		}
 
 		public bool IsEnabled(LogLevel logLevel)
@@ -44,7 +44,7 @@ namespace Api.Logger
 		}
 
 		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state,
-			Exception exception, Func<TState, Exception, string> formatter)
+			Exception? exception, Func<TState, Exception?, string>? formatter)
 		{
 			if (!IsEnabled(logLevel))
 			{
@@ -56,9 +56,9 @@ namespace Api.Logger
 				throw new ArgumentNullException(nameof(formatter));
 			}
 
-			string message = null;
+			string? message = null;
 
-			if (null != formatter)
+			if (formatter != null)
 			{
 				message = formatter(state, exception);
 			}

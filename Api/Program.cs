@@ -75,7 +75,7 @@ app.Run();
 
 public record Matrix
 {
-    public List<Row> Rows { get; set; }
+    public List<Row> Rows { get; set; } = new();
 
     public record Row(double[] Data)
     {

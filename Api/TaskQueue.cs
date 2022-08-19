@@ -6,8 +6,8 @@ namespace Api
     {
         private class Item
         {
-            public string Id;
-            public double[,] Data;
+            public string Id = string.Empty;
+            public double[,] Data = default!;
         }
 
         private readonly object _locker = new object();
@@ -26,7 +26,7 @@ namespace Api
             return Queue.Count;
         }
 
-        public string GetFirstId()
+        public string? GetFirstId()
         {
             if (Queue.Count != 0)
                 return Queue.First().Id;
@@ -75,7 +75,7 @@ namespace Api
         {
             await _semaphoreSlim.WaitAsync();
 
-            Task<double> resultTask = null;
+            Task<double>? resultTask = null;
             Item temp = new();
             bool execute = false;
 

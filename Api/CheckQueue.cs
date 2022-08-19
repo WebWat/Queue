@@ -4,7 +4,7 @@
     {
         private readonly ILogger<CheckQueue> _logger;
         private readonly TaskQueue _taskQueue;
-        private string _temp = null;
+        private string? _temp = null;
 
         public CheckQueue(TaskQueue taskQueue, ILogger<CheckQueue> logger)
         {

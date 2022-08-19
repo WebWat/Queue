@@ -75,7 +75,7 @@ namespace Api.Logger
 
 			fWriter = new FileWriter(this);
 			processQueueTask = Task.Factory.StartNew(
-				ProcessQueue,
+				ProcessQueue!,
 				this,
 				TaskCreationOptions.LongRunning);
 		}
@@ -135,9 +135,9 @@ namespace Api.Logger
 		{
 
 			readonly FileLoggerProvider FileLogPrv;
-			string LogFileName;
-			Stream LogFileStream;
-			TextWriter LogFileWriter;
+			string LogFileName = string.Empty;
+			Stream? LogFileStream;
+			TextWriter? LogFileWriter;
 
 			internal FileWriter(FileLoggerProvider fileLogPrv)
 			{
@@ -207,14 +207,14 @@ namespace Api.Logger
 					}
 				}
 
-				LogFileWriter = new StreamWriter(LogFileStream);
+				LogFileWriter = new StreamWriter(LogFileStream!);
 
 				void createLogFileStream()
 				{
 					var fileInfo = new FileInfo(LogFileName);
 					// Directory.Create will check if the directory already exists,
 					// so there is no need for a "manual" check first.
-					fileInfo.Directory.Create();
+					fileInfo.Directory!.Create();
 
 					LogFileStream = new FileStream(LogFileName, FileMode.OpenOrCreate, FileAccess.Write);
 					if (append)
@@ -231,7 +231,7 @@ namespace Api.Logger
 
 			string GetNextFileLogName()
 			{
-				var baseLogFileName = GetBaseLogFileName();
+				string baseLogFileName = GetBaseLogFileName();
 				// if file does not exist or file size limit is not reached - do not add rolling file index
 				if (!System.IO.File.Exists(baseLogFileName) ||
 					FileLogPrv.FileSizeLimitBytes <= 0 ||
@@ -254,11 +254,16 @@ namespace Api.Logger
 				}
 
 				var nextFileName = baseFileNameOnly + (nextFileIndex > 0 ? nextFileIndex.ToString() : "") + Path.GetExtension(baseLogFileName);
-				return Path.Combine(Path.GetDirectoryName(baseLogFileName), nextFileName);
+
+				var directoryPath = Path.GetDirectoryName(baseLogFileName);
+
+				ArgumentNullException.ThrowIfNull(directoryPath, nameof(directoryPath));
+
+				return Path.Combine(directoryPath, nextFileName);
 			}
 
 			// cache last returned base log file name to avoid excessive checks in CheckForNewLogFile.isBaseFileNameChanged
-			string __LastBaseLogFileName = null;
+			string? __LastBaseLogFileName = null;
 
 			void CheckForNewLogFile()
 			{
@@ -275,8 +280,9 @@ namespace Api.Logger
 
 				bool isMaxFileSizeThresholdReached()
 				{
-					return FileLogPrv.FileSizeLimitBytes > 0 && LogFileStream.Length > FileLogPrv.FileSizeLimitBytes;
+					return FileLogPrv.FileSizeLimitBytes > 0 && LogFileStream!.Length > FileLogPrv.FileSizeLimitBytes;
 				}
+
 				bool isBaseFileNameChanged()
 				{
 					if (FileLogPrv.FormatLogFileName != null)
@@ -310,7 +316,7 @@ namespace Api.Logger
 				{
 					LogFileWriter.Dispose();
 					LogFileWriter = null;
-					LogFileStream.Dispose();
+					LogFileStream!.Dispose();
 					LogFileStream = null;
 				}
 			}
@@ -330,7 +336,7 @@ namespace Api.Logger
 			/// <summary>
 			/// Current log file name.
 			/// </summary>
-			public string LogFileName { get; private set; }
+			public string LogFileName { get; private set; } = string.Empty;
 
 			internal FileError(string logFileName, Exception ex)
 			{
@@ -338,16 +344,16 @@ namespace Api.Logger
 				ErrorException = ex;
 			}
 
-			internal string NewLogFileName { get; private set; }
+			internal string NewLogFileName { get; private set; } = string.Empty;
 
-			/// <summary>
-			/// Suggests a new log file name to use instead of the current one. 
-			/// </summary>
-			/// <remarks>
-			/// If proposed file name also leads to a file error this will break a file logger: errors are not handled recursively.
-			/// </remarks>
-			/// <param name="newLogFileName">a new log file name</param>
-			public void UseNewLogFileName(string newLogFileName)
+            /// <summary>
+            /// Suggests a new log file name to use instead of the current one. 
+            /// </summary>
+            /// <remarks>
+            /// If proposed file name also leads to a file error this will break a file logger: errors are not handled recursively.
+            /// </remarks>
+            /// <param name="newLogFileName">a new log file name</param>
+            public void UseNewLogFileName(string newLogFileName)
 			{
 				NewLogFileName = newLogFileName;
 			}
