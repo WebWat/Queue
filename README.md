@@ -215,8 +215,6 @@ public async Task Start()
 ### NbomberС2
 You can also run the `NbomberC2` load testing project and test the example. Only for this you need to [run all projects from 1 solution](https://stackoverflow.com/questions/3850019/running-two-projects-at-once-in-visual-studio).
 
-## Contributing
-Any pull request that will somehow help improve this project is welcome!
 
 ## Used resources
 - https://github.com/nreco/logging
